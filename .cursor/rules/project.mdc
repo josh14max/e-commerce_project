@@ -1,0 +1,24 @@
+---
+description: Contexte général du projet NGE Hair
+alwaysApply: true
+---
+
+Ce projet est un site e-commerce nommé NGE Hair, qui vend des perruques et
+des vêtements pour trois profils de clientes : mode grand public, cheveux
+afro/texturés, et perte de cheveux.
+
+Stack technique : React 18 + TypeScript + Vite + Tailwind CSS 3.
+Client de données : @supabase/supabase-js (déjà installé, à connecter en Phase 5).
+Icônes : lucide-react exclusivement, ne jamais ajouter une autre librairie d'icônes.
+
+Style de code : composants fonctionnels avec hooks, fichiers .tsx, pas de classes.
+Respecter le typage TypeScript existant, éviter `any` sauf nécessité justifiée.
+Conventions de nommage : composants en PascalCase (.tsx), utilitaires en camelCase (.ts).
+Design system : utiliser exclusivement les couleurs et styles définis dans
+tailwind.config, ne jamais coder une couleur en dur dans un composant.
+Priorité absolue : le site doit rester utilisable sur mobile et sur une
+connexion internet lente.
+Ne jamais supprimer une fonctionnalité existante sans le signaler
+explicitement avant de le faire.
+Toujours expliquer en une phrase, avant chaque modification importante,
+ce qui va être changé et pourquoi.
