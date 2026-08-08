@@ -1,6 +1,16 @@
 {
   "rewrites": [
-    { "source": "/produit/:slug", "destination": "/api/produit?slug=:slug" },
+    {
+      "source": "/produit/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|SkypeUriPreview|Pinterest|redditbot|vkShare|Applebot|W3C_Validator|Embedly|Quora Link Preview).*"
+        }
+      ],
+      "destination": "/api/produit?slug=:slug"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

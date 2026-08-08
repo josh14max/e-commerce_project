@@ -146,7 +146,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
           {/* Variant selector (length for wigs, size for clothing) */}
           {variantOptions.length > 0 && (
             <div className="mt-5">
-              <p className="label">{isWig ? 'Longueur' : 'Taille'} : <span className="font-normal text-ora-text-muted">{currentVariant}</span></p>
+              <p className="label">Taille : <span className="font-normal text-ora-text-muted">{currentVariant}</span></p>
               <div className="flex flex-wrap gap-2">
                 {variantOptions.map((v) => (
                   <button
