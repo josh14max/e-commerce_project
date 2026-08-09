@@ -19,6 +19,7 @@
 @layer utilities {
   .bg-ora-bg       { @apply bg-white; }
   .bg-ora-bg-alt   { @apply bg-nge-bg; }
+  .bg-ora-text     { @apply bg-nge-black; }
   .text-ora-text   { @apply text-nge-black; }
   .text-ora-text-muted { @apply text-nge-muted; }
   .text-ora-accent { @apply text-nge-warm; }

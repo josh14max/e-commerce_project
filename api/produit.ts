@@ -8,63 +8,43 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-export default async function handler(req: any, res: any) {
+// Cette fonction n'est appelée que par les robots de prévisualisation (WhatsApp, Facebook, etc.)
+// — voir la condition "has" dans vercel.json. Un vrai visiteur humain ne passe jamais par ici,
+// il reçoit directement l'application normale. Comme les robots n'exécutent pas de JavaScript,
+// pas besoin de renvoyer l'app complète : juste les balises meta, ce qui rend cette fonction
+// simple et impossible à faire planter (aucun appel réseau, aucune dépendance externe).
+export default function handler(req: any, res: any) {
   const slugParam = req.query?.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam ?? '';
-
   const product = PRODUCTS.find((p) => p.slug === slug);
 
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
   const host = req.headers.host;
   const baseUrl = `${proto}://${host}`;
 
-  // Récupère le vrai HTML déployé (avec les noms de fichiers JS/CSS générés au build),
-  // pour ne jamais avoir à les recopier à la main ici.
-  let html: string;
-  try {
-    const htmlRes = await fetch(`${baseUrl}/index.html`);
-    html = await htmlRes.text();
-  } catch {
-    res.status(502).send('Erreur de génération de la page');
-    return;
-  }
+  const title = product ? `${product.name} — NG Hair` : 'NG Hair — La beauté qui vous ressemble';
+  const description = product
+    ? (product.shortDescription || product.description || '').slice(0, 160)
+    : 'Des perruques pensées pour toutes les femmes.';
+  const image = product?.images?.[0] || `${baseUrl}/og-image.jpg`;
+  const url = product ? `${baseUrl}/produit/${product.slug}` : baseUrl;
 
-  if (product) {
-    const title = `${product.name} — NG Hair`;
-    const description = (product.shortDescription || product.description || '').slice(0, 160);
-    const image = product.images?.[0] || `${baseUrl}/og-image.jpg`;
-    const url = `${baseUrl}/produit/${product.slug}`;
-
-    html = html
-      .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`)
-      .replace(
-        /<meta name="description" content="[^"]*"\s*\/>/,
-        `<meta name="description" content="${escapeHtml(description)}" />`
-      )
-      .replace(
-        /<meta property="og:title" content="[^"]*"\s*\/>/,
-        `<meta property="og:title" content="${escapeHtml(title)}" />`
-      )
-      .replace(
-        /<meta property="og:description" content="[^"]*"\s*\/>/,
-        `<meta property="og:description" content="${escapeHtml(description)}" />`
-      )
-      .replace(
-        /<meta property="og:type" content="[^"]*"\s*\/>/,
-        `<meta property="og:type" content="product" />`
-      )
-      .replace(
-        /<meta property="og:image" content="[^"]*"\s*\/>/,
-        `<meta property="og:image" content="${escapeHtml(image)}" />`
-      )
-      .replace(
-        /<meta name="twitter:image" content="[^"]*"\s*\/>/,
-        `<meta name="twitter:image" content="${escapeHtml(image)}" />`
-      )
-      .replace('</head>', `  <meta property="og:url" content="${escapeHtml(url)}" />\n  </head>`);
-  }
-  // Si le produit n'existe pas (lien cassé, ancien slug) : on sert le HTML tel quel,
-  // avec les balises génériques du site — pas d'erreur, juste pas de personnalisation.
+  const html = `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>${escapeHtml(title)}</title>
+<meta name="description" content="${escapeHtml(description)}" />
+<meta property="og:type" content="${product ? 'product' : 'website'}" />
+<meta property="og:title" content="${escapeHtml(title)}" />
+<meta property="og:description" content="${escapeHtml(description)}" />
+<meta property="og:image" content="${escapeHtml(image)}" />
+<meta property="og:url" content="${escapeHtml(url)}" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="${escapeHtml(image)}" />
+</head>
+<body></body>
+</html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600');

@@ -28,6 +28,9 @@ const COLOR_SWATCH: Record<string, string> = {
   Cuivre: '#B87333',
   Multicolore: 'linear-gradient(135deg,#C1704A,#2F4A3D,#E8D9B5)',
   Poudre: '#E8C9C0',
+  'Gris argenté': '#A9ABB0',
+  Rose: '#E88CA0',
+  Miel: 'linear-gradient(135deg,#C89B5C,#6B4226)',
 };
 
 export function colorSwatch(color: string): string {

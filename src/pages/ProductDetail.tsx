@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
-import { getProduct, getByCategory, formatPrice } from '@/lib/products';
+import { getProduct, getByCategory, formatPrice, getPriceForSize } from '@/lib/products';
 import { useCart } from '@/lib/cart';
 import ProductCard from '@/components/ProductCard';
 import ProductImage from '@/components/ProductImage';
@@ -40,6 +40,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
   const variantKey = isWig ? 'longueur' : 'taille';
   const defaultVariant = variantOptions[0] ?? '';
   const currentVariant = selectedVariant || defaultVariant;
+  const currentPrice = isWig ? getPriceForSize(product.price, currentVariant) : product.price;
 
   const handleAdd = () => {
     add(
@@ -47,7 +48,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
         productId: product.id,
         slug: product.slug,
         name: product.name,
-        price: product.price,
+        price: currentPrice,
         image: product.images[0],
         category: product.category,
         variantLabel: `${selectedColor} · ${currentVariant}`,
@@ -113,7 +114,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
         </div>
           
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-num text-2xl font-bold text-ora-text">{formatPrice(product.price)}</span>
+            <span className="font-num text-2xl font-bold text-ora-text">{formatPrice(currentPrice)}</span>
             {product.compareAtPrice && (
               <span className="font-num text-base font-semibold text-ora-text-muted line-through">{formatPrice(product.compareAtPrice)}</span>
             )}
@@ -146,7 +147,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
           {/* Variant selector (length for wigs, size for clothing) */}
           {variantOptions.length > 0 && (
             <div className="mt-5">
-              <p className="label">{isWig ? 'Longueur' : 'Taille'} : <span className="font-normal text-ora-text-muted">{currentVariant}</span></p>
+              <p className="label">Taille : <span className="font-normal text-ora-text-muted">{currentVariant}</span></p>
               <div className="flex flex-wrap gap-2">
                 {variantOptions.map((v) => (
                   <button
