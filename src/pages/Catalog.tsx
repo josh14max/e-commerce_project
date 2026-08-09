@@ -25,7 +25,7 @@ export default function Catalog({ navigate, category }: CatalogProps) {
     category === 'wigs'
       ? [
           { label: 'Texture', key: 'texture', options: WIG_TEXTURES },
-          { label: 'Longueur', key: 'length', options: WIG_LENGTHS },
+          { label: 'Taille', key: 'length', options: WIG_LENGTHS },
           { label: 'Couleur', key: 'color', options: WIG_COLORS },
         ]
       : [
