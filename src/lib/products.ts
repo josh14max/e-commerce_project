@@ -19,7 +19,7 @@ export const PRODUCTS: Product[] = [
     category: 'wigs',
     universe: 'perruques',
     price: 58000,
-    compareAtPrice: 68000,
+    // compareAtPrice: 68000,
     shortDescription: 'Vert émeraude profond, racines dégradées, ondulations glamour.',
     description:
       "Jade ose la couleur avec élégance : un vert émeraude intense qui s'éclaircit en dégradé depuis des racines naturelles. Ses ondulations souples et son lace front finement plumé offrent un résultat spectaculaire, pour celles qui veulent se démarquer sans compromis sur le naturel de l'implantation.",
@@ -99,7 +99,7 @@ export const PRODUCTS: Product[] = [
     category: 'wigs',
     universe: 'perruques',
     price: 46000,
-    compareAtPrice: 54000,
+    // compareAtPrice: 54000,
     shortDescription: 'Noir intense, chute lisse XXL, brillance soyeuse.',
     description:
       "Yasmine, c'est la longueur assumée : une chevelure lisse et soyeuse qui descend jusqu'au bas du dos, dans un noir profond et uniforme. Sa texture fine et sa légèreté en font une perruque qui se porte toute la journée sans jamais peser.",
@@ -110,7 +110,7 @@ export const PRODUCTS: Product[] = [
     colors: ['Noir', 'Châtain', 'Auburn'],
     lengths: ['12', '16', '20', '22', '28', '30', '32'],
     textures: ['Lisse'],
-    badge: 'Best-seller',
+    // badge: 'Best-seller',
     profiles: ['mode', 'perte'],
     featured: true,
   },
@@ -131,7 +131,7 @@ export const PRODUCTS: Product[] = [
     colors: ['Gris argenté', 'Blond platine', 'Noir'],
     lengths: ['12', '16', '20', '22', '28', '30', '32'],
     textures: ['Lisse'],
-    badge: 'Nouveau',
+    // badge: 'Nouveau',
     profiles: ['mode'],
   },
   {

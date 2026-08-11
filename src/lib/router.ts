@@ -9,7 +9,8 @@ export type Route =
   | { name: 'checkout' }
   | { name: 'payment-confirmation' }
   | { name: 'account' }
-  | { name: 'about' };
+  | { name: 'about' }
+  | { name: 'admin' };
 
 function parse(pathname: string): Route {
   const clean = pathname.replace(/^\/+/, '').trim();
@@ -34,6 +35,8 @@ function parse(pathname: string): Route {
       return { name: 'account' };
     case 'a-propos':
       return { name: 'about' };
+    case 'admin':
+      return { name: 'admin' };
     default:
       return { name: 'home' };
   }

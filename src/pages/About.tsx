@@ -87,17 +87,12 @@ export default function About({ navigate }: AboutProps) {
             {[
               {
                 t: 'Le style, simplement',
-                d: "Vous aimez changer de tête, suivre une envie, vous sentir fraîche. Nos perruques mode vous accompagnent dans chaque variation de vous.",
-                img: 'https://images.pexels.com/photos/3993447/pexels-photo-3993447.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-              },
-              {
-                t: 'Cheveux afro & texturés',
-                d: "Afro, frison, tresses : vos textures sont une fierté. Nos pièces protective style respectent votre cuir chevelu et célèbrent votre héritage.",
-                img: 'https://images.pexels.com/photos/1024311/pexels-photo-1024311.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
+                d: "Vous aimez changer de tête, suivre une envie, vous sentir fraîche. Nos perruques vous accompagnent dans chaque variation de vous.",
+                img: '/public/perruques/perruque-kiara-rose.jpg',
               },
               {
                 t: "L'accompagnement",
-                d: "Perte de cheveux liée à un traitement, une maladie, un choc : nos perruques confort sont douces, légères, pensées pour les sensibilités.",
+                d: "Vos paiements sont 100% sécurisés, vos commandes sont gérés et suivis proprement et la livraison est soignée.",
                 img: 'https://images.pexels.com/photos/3992652/pexels-photo-3992652.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
               },
             ].map((c) => (

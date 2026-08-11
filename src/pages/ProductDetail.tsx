@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
 import { getProduct, getByCategory, formatPrice, getPriceForSize } from '@/lib/products';
 import { useCart } from '@/lib/cart';
@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import ProductImage from '@/components/ProductImage';
 import ShareButton from '@/components/ShareButton';
 import { colorSwatch } from '@/components/ProductCard';
+import type { Product } from '@/lib/types';
 
 interface ProductDetailProps {
   slug: string;
@@ -13,14 +14,47 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
-  const product = useMemo(() => getProduct(slug), [slug]);
   const { add } = useCart();
+  const [product, setProduct] = useState<Product | undefined>(undefined);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [related, setRelated] = useState<Product[]>([]);
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product?.colors[0] ?? '');
+  const [selectedColor, setSelectedColor] = useState('');
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    setLoadingProduct(true);
+    setProduct(undefined);
+    setRelated([]);
+
+    getProduct(slug).then((data) => {
+      if (!active) return;
+      setProduct(data);
+      setLoadingProduct(false);
+      setActiveImage(0);
+      setSelectedVariant('');
+      setSelectedColor(data?.colors[0] ?? '');
+
+      if (data) {
+        getByCategory(data.category).then((all) => {
+          if (active) {
+            setRelated(all.filter((p) => p.id !== data.id).slice(0, 4));
+          }
+        });
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (loadingProduct) {
+    return <div className="container-ora py-24 text-center text-ora-text-muted">Chargement…</div>;
+  }
 
   if (!product) {
     return (
@@ -59,10 +93,6 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   };
-
-  const related = getByCategory(product.category)
-    .filter((p) => p.id !== product.id)
-    .slice(0, 4);
 
   return (
     <div className="container-ora py-6 sm:py-10">

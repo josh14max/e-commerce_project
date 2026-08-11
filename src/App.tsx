@@ -13,6 +13,7 @@ import Checkout from '@/pages/Checkout';
 import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import Account from '@/pages/Account';
 import About from '@/pages/About';
+import Admin from '@/pages/Admin';
 
 function currentRouteName(route: ReturnType<typeof useRoute>[0]): string {
   return route.name;
@@ -22,6 +23,16 @@ function App() {
   const [route, navigate] = useRoute();
   const [cartOpen, setCartOpen] = useState(false);
   const current = currentRouteName(route);
+
+  // L'admin a sa propre interface, complètement séparée du site marchand
+  // (pas de navbar, pas de bandeau promo, pas de panier).
+  if (route.name === 'admin') {
+    return (
+      <AuthProvider>
+        <Admin navigate={navigate} />
+      </AuthProvider>
+    );
+  }
 
   let page;
   switch (route.name) {

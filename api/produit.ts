@@ -1,4 +1,4 @@
-import { PRODUCTS } from '../src/lib/products';
+import { createClient } from '@supabase/supabase-js';
 
 function escapeHtml(str: string): string {
   return str
@@ -10,21 +10,50 @@ function escapeHtml(str: string): string {
 
 // Cette fonction n'est appelée que par les robots de prévisualisation (WhatsApp, Facebook, etc.)
 // — voir la condition "has" dans vercel.json. Un vrai visiteur humain ne passe jamais par ici,
-// il reçoit directement l'application normale. Comme les robots n'exécutent pas de JavaScript,
-// pas besoin de renvoyer l'app complète : juste les balises meta, ce qui rend cette fonction
-// simple et impossible à faire planter (aucun appel réseau, aucune dépendance externe).
-export default function handler(req: any, res: any) {
+// il reçoit directement l'application normale, qui va elle-même chercher le produit dans Supabase.
+//
+// Contrairement au reste de l'app, cette fonction interroge Supabase directement (pas via le
+// client navigateur) car elle tourne côté serveur. Si la requête échoue pour une raison
+// quelconque (réseau, config), elle ne plante jamais : elle retombe sur les balises génériques
+// du site, jamais sur une erreur brute.
+export default async function handler(req: any, res: any) {
   const slugParam = req.query?.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam ?? '';
-  const product = PRODUCTS.find((p) => p.slug === slug);
 
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
   const host = req.headers.host;
   const baseUrl = `${proto}://${host}`;
 
+  let product: {
+    name: string;
+    short_description: string | null;
+    description: string | null;
+    images: string[] | null;
+    slug: string;
+  } | null = null;
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (slug && supabaseUrl && supabaseAnonKey) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { data } = await supabase
+        .from('products')
+        .select('slug, name, short_description, description, images')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .maybeSingle();
+      product = data;
+    } catch {
+      // Supabase injoignable ou en erreur : on continue avec les balises génériques ci-dessous.
+      product = null;
+    }
+  }
+
   const title = product ? `${product.name} — NG Hair` : 'NG Hair — La beauté qui vous ressemble';
   const description = product
-    ? (product.shortDescription || product.description || '').slice(0, 160)
+    ? (product.short_description || product.description || '').slice(0, 160)
     : 'Des perruques pensées pour toutes les femmes.';
   const image = product?.images?.[0] || `${baseUrl}/og-image.jpg`;
   const url = product ? `${baseUrl}/produit/${product.slug}` : baseUrl;
