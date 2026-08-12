@@ -14,6 +14,7 @@ import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import Account from '@/pages/Account';
 import About from '@/pages/About';
 import Admin from '@/pages/Admin';
+import AdminResetPassword from '@/pages/AdminResetPassword';
 
 function currentRouteName(route: ReturnType<typeof useRoute>[0]): string {
   return route.name;
@@ -30,6 +31,14 @@ function App() {
     return (
       <AuthProvider>
         <Admin navigate={navigate} />
+      </AuthProvider>
+    );
+  }
+
+  if (route.name === 'admin-reset') {
+    return (
+      <AuthProvider>
+        <AdminResetPassword navigate={navigate} />
       </AuthProvider>
     );
   }
