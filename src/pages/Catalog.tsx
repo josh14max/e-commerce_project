@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '@/components/PageHeader';
 import FilterBar, { type FilterGroup } from '@/components/FilterBar';
 import ProductCard from '@/components/ProductCard';
@@ -18,8 +18,23 @@ interface CatalogProps {
 }
 
 export default function Catalog({ navigate, category }: CatalogProps) {
-  const all = useMemo(() => getByCategory(category), [category]);
+  const [all, setAll] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    getByCategory(category).then((data) => {
+      if (active) {
+        setAll(data);
+        setLoading(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [category]);
 
   const groups: FilterGroup[] =
     category === 'wigs'
@@ -79,7 +94,9 @@ export default function Catalog({ navigate, category }: CatalogProps) {
         resultCount={filtered.length}
       />
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="py-20 text-center text-ora-text-muted">Chargement des produits…</div>
+      ) : filtered.length === 0 ? (
         <div className="py-20 text-center">
           <p className="font-display text-xl font-light text-ora-text mb-2">Aucun produit ne correspond.</p>
           <p className="text-ora-text-muted mb-5">Essayez d'élargir vos filtres.</p>

@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { getFeatured } from '@/lib/products';
 import ProductCard from '@/components/ProductCard';
 import ProductImage from '@/components/ProductImage';
+import type { Product } from '@/lib/types';
 import type { Route } from '@/lib/router';
 
 interface HomeProps {
@@ -9,7 +11,21 @@ interface HomeProps {
 }
 
 export default function Home({ navigate }: HomeProps) {
-  const featured = getFeatured();
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getFeatured().then((data) => {
+      if (active) {
+        setFeatured(data);
+        setLoadingFeatured(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div>
@@ -84,11 +100,15 @@ export default function Home({ navigate }: HomeProps) {
             Tout voir <ArrowRight className="h-4 w-4" />
           </button>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-6">
-          {featured.map((p, i) => (
-            <ProductCard key={p.id} product={p} navigate={navigate} index={i} />
-          ))}
-        </div>
+        {loadingFeatured ? (
+          <div className="py-16 text-center text-ora-text-muted">Chargement des produits…</div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-6">
+            {featured.map((p, i) => (
+              <ProductCard key={p.id} product={p} navigate={navigate} index={i} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ────────── Story ────────── */}

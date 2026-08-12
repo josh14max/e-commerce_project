@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 
+// Adresse d'accès au panneau d'administration — volontairement non devinable,
+// à communiquer directement à l'admin (jamais de lien visible sur le site public).
+export const ADMIN_PATH = 'gestioncommerce_totale_ngh';
+
 export type Route =
   | { name: 'home' }
   | { name: 'wigs' }
@@ -9,7 +13,9 @@ export type Route =
   | { name: 'checkout' }
   | { name: 'payment-confirmation' }
   | { name: 'account' }
-  | { name: 'about' };
+  | { name: 'about' }
+  | { name: 'admin' }
+  | { name: 'admin-reset' };
 
 function parse(pathname: string): Route {
   const clean = pathname.replace(/^\/+/, '').trim();
@@ -34,6 +40,9 @@ function parse(pathname: string): Route {
       return { name: 'account' };
     case 'a-propos':
       return { name: 'about' };
+    case ADMIN_PATH:
+      if (param.startsWith('reset-password')) return { name: 'admin-reset' };
+      return { name: 'admin' };
     default:
       return { name: 'home' };
   }
