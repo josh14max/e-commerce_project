@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { ADMIN_PATH } from './router';
 
 interface AuthContextValue {
   session: Session | null;
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const requestPasswordReset: AuthContextValue['requestPasswordReset'] = async (email) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/admin/reset-password`,
+      redirectTo: `${window.location.origin}/${ADMIN_PATH}/reset-password`,
     });
     return { error: error ? error.message : null };
   };
