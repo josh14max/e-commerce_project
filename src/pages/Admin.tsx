@@ -1,6 +1,11 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Plus, Pencil, Trash2, EyeOff } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useIsAdmin } from '@/lib/useIsAdmin';
+import { formatPrice } from '@/lib/products';
+import { getAllProductsForAdmin, deleteProduct } from '@/lib/adminProducts';
+import type { Product } from '@/lib/types';
+import ProductForm from '@/components/admin/ProductForm';
 
 interface AdminProps {
   navigate: (to: string) => void;
@@ -15,6 +20,37 @@ export default function Admin({ navigate }: AdminProps) {
   const [submitting, setSubmitting] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
+
+  const loadProducts = async () => {
+    setLoadingProducts(true);
+    const data = await getAllProductsForAdmin();
+    setProducts(data);
+    setLoadingProducts(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadProducts();
+    }
+  }, [isAdmin]);
+
+  const handleDelete = async (slug: string) => {
+    if (!confirm('Supprimer définitivement cet article ? Cette action est irréversible.')) return;
+    setDeletingSlug(slug);
+    const { error } = await deleteProduct(slug);
+    setDeletingSlug(null);
+    if (error) {
+      alert(`Erreur lors de la suppression : ${error}`);
+      return;
+    }
+    loadProducts();
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -180,30 +216,100 @@ export default function Admin({ navigate }: AdminProps) {
     );
   }
 
-  // Connecté et admin : tableau de bord
-  // Les vraies sections (produits, commandes, contenu) arrivent en Phase 2, 3 et 4.
+  // Connecté et admin : tableau de bord produits
   return (
     <div className="min-h-screen bg-nge-bg">
       <header className="flex items-center justify-between px-6 h-16 bg-white border-b border-nge-line">
         <span className="font-display text-lg text-nge-black">NG Hair — Administration</span>
         <div className="flex items-center gap-4">
           <span className="text-sm text-nge-muted hidden sm:inline">{user.email}</span>
-          <button
-            onClick={() => signOut()}
-            className="text-sm text-nge-muted hover:text-nge-black"
-          >
+          <button onClick={() => signOut()} className="text-sm text-nge-muted hover:text-nge-black">
             Déconnexion
           </button>
         </div>
       </header>
-      <div className="p-8 max-w-2xl">
-        <h2 className="font-display text-xl text-nge-black mb-2">Connexion réussie</h2>
-        <p className="text-sm text-nge-muted">
-          Les fondations sont en place : base de données, sécurité, et cet accès protégé.
-          Les outils de gestion (produits, commandes, contenu du site) arrivent dans les
-          prochaines étapes.
-        </p>
+
+      <div className="p-6 sm:p-8 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display text-xl text-nge-black">Produits ({products.length})</h2>
+          <button
+            onClick={() => {
+              setEditingProduct(null);
+              setShowForm(true);
+            }}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-nge-black text-white text-xs font-medium uppercase tracking-wide"
+          >
+            <Plus className="h-4 w-4" />
+            Nouvel article
+          </button>
+        </div>
+
+        {loadingProducts ? (
+          <p className="text-sm text-nge-muted">Chargement…</p>
+        ) : products.length === 0 ? (
+          <p className="text-sm text-nge-muted">Aucun article pour l'instant.</p>
+        ) : (
+          <div className="bg-white rounded-sm border border-nge-line divide-y divide-nge-line">
+            {products.map((p) => (
+              <div key={p.id} className="flex items-center gap-4 p-4">
+                <img
+                  src={p.images[0]}
+                  alt=""
+                  className="h-14 w-14 rounded-sm object-cover bg-nge-bg-alt shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-nge-black truncate">{p.name}</p>
+                    {p.isActive === false && (
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-nge-muted bg-nge-bg-alt px-1.5 py-0.5 rounded-sm shrink-0">
+                        <EyeOff className="h-3 w-3" />
+                        Masqué
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-nge-muted">
+                    {formatPrice(p.price)}
+                    {p.compareAtPrice && (
+                      <span className="line-through ml-2 text-nge-muted/70">{formatPrice(p.compareAtPrice)}</span>
+                    )}
+                    {' · '}
+                    {p.colors.length} couleur{p.colors.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingProduct(p);
+                    setShowForm(true);
+                  }}
+                  className="grid h-9 w-9 place-items-center text-nge-muted hover:text-nge-black shrink-0"
+                  aria-label="Modifier"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(p.slug)}
+                  disabled={deletingSlug === p.slug}
+                  className="grid h-9 w-9 place-items-center text-nge-muted hover:text-red-600 shrink-0 disabled:opacity-50"
+                  aria-label="Supprimer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {showForm && (
+        <ProductForm
+          product={editingProduct}
+          onClose={() => setShowForm(false)}
+          onSaved={() => {
+            setShowForm(false);
+            loadProducts();
+          }}
+        />
+      )}
     </div>
   );
 }
