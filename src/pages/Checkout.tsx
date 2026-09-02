@@ -63,43 +63,23 @@ export default function Checkout({ navigate }: CheckoutProps) {
 
     setLoading(true);
     try {
-      // 1. Create order in Supabase
-      const orderData = {
-        user_id: user?.id || null,
-        email: form.email,
-        first_name: form.firstName,
-        last_name: form.lastName,
-        country: form.country,
-        phone: form.phone,
-        items: items,
-        subtotal: subtotal,
-        shipping: 0,
-        total: subtotal,
-        deposit_amount: depositAmount,
-        status: 'pending',
-      };
-
-      const { data: orderRow, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select()
-        .single();
-
-      if (orderError || !orderRow) {
-        throw new Error('Impossible de créer la commande. Veuillez réessayer.');
-      }
-
-      // 2. Initialize Moneroo payment via Edge Function
+      // La fonction serveur crée la commande et recalcule tous les prix depuis
+      // le catalogue avant d'initialiser le paiement Moneroo.
       const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: {
-          currency: 'XOF',
           customer: {
             email: form.email.trim() || user?.email || '',
             first_name: form.firstName.trim(),
             last_name: form.lastName.trim(),
+            phone: form.phone.trim(),
+            country: form.country.trim(),
           },
-          orderId: orderRow.id,
-          returnUrl: `${window.location.origin}/commande/confirmation`,
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantValue: item.variantValue,
+            quantity: item.quantity,
+          })),
+          returnUrl: `${window.location.origin}/paiement/confirmation`,
         },
       });
 
@@ -117,7 +97,8 @@ export default function Checkout({ navigate }: CheckoutProps) {
         throw new Error('URL de paiement manquante dans la réponse.');
       }
 
-      // 3. Redirect to Moneroo checkout
+      // Moneroo redirigera ensuite vers /paiement/confirmation. Seul le
+      // webhook ou la vérification serveur pourra confirmer le paiement.
       window.location.href = data.checkout_url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du paiement.');
