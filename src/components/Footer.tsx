@@ -1,10 +1,13 @@
 import { Heart } from 'lucide-react';
+import { useSiteSettings } from '@/lib/siteSettings';
 
 interface FooterProps {
   navigate: (to: string) => void;
 }
 
 export default function Footer({ navigate }: FooterProps) {
+  const { settings } = useSiteSettings();
+  const footer = settings.footer;
   return (
     <footer className="mt-20 border-t border-nge-line bg-white">
       <div className="container-ora py-14">
@@ -15,7 +18,7 @@ export default function Footer({ navigate }: FooterProps) {
               <Heart className="h-5 w-5" />
             </span>
             <div>
-              <p className="font-display text-base font-normal text-nge-black">Pensé pour chaque femme</p>
+              <p className="font-display text-base font-normal text-nge-black">{footer.promiseTitle}</p>
             </div>
           </div>
         </div>
@@ -40,7 +43,7 @@ export default function Footer({ navigate }: FooterProps) {
                </span>
             </div>
             <p className="text-sm text-nge-muted max-w-xs leading-relaxed font-light">
-              Perruques pensées pour toutes les femmes, la beauté qui vous ressemble. Livrée chez vous.
+              {footer.description}
             </p>
           </div>
 
@@ -63,8 +66,8 @@ export default function Footer({ navigate }: FooterProps) {
         </div>
 
         <div className="mt-10 pt-6 border-t border-nge-line flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-nge-muted">© {new Date().getFullYear()} NG Hair. Tous droits réservés.</p>
-          <p className="text-xs text-nge-muted">Conçu avec soin, pour toutes les femmes.</p>
+          <p className="text-xs text-nge-muted">© {new Date().getFullYear()} {footer.copyright}</p>
+          <p className="text-xs text-nge-muted">{footer.signature}</p>
         </div>
       </div>
     </footer>

@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PageHeader from '@/components/PageHeader';
 import FilterBar, { type FilterGroup } from '@/components/FilterBar';
 import ProductCard from '@/components/ProductCard';
 import {
   getByCategory,
-  WIG_TEXTURES,
-  WIG_LENGTHS,
-  WIG_COLORS,
   CLOTHING_SIZES,
   CLOTHING_COLORS,
 } from '@/lib/products';
+import { fallbackCatalogOptions, getCatalogOptions } from '@/lib/catalogOptions';
+import { useSiteSettings } from '@/lib/siteSettings';
 import type { Product } from '@/lib/types';
 
 interface CatalogProps {
@@ -18,7 +17,9 @@ interface CatalogProps {
 }
 
 export default function Catalog({ navigate, category }: CatalogProps) {
+  const { settings } = useSiteSettings();
   const [all, setAll] = useState<Product[]>([]);
+  const [catalogOptions, setCatalogOptions] = useState(fallbackCatalogOptions());
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Record<string, string[]>>({});
 
@@ -36,12 +37,21 @@ export default function Catalog({ navigate, category }: CatalogProps) {
     };
   }, [category]);
 
+  useEffect(() => {
+    getCatalogOptions().then(setCatalogOptions);
+  }, []);
+
+  const wigOptions = (type: 'texture' | 'size' | 'color') => catalogOptions
+    .filter((option) => option.type === type)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((option) => option.label);
+
   const groups: FilterGroup[] =
     category === 'wigs'
       ? [
-          { label: 'Texture', key: 'texture', options: WIG_TEXTURES },
-          { label: 'Taille', key: 'length', options: WIG_LENGTHS },
-          { label: 'Couleur', key: 'color', options: WIG_COLORS },
+          { label: 'Texture', key: 'texture', options: wigOptions('texture') },
+          { label: 'Taille', key: 'length', options: wigOptions('size') },
+          { label: 'Couleur', key: 'color', options: wigOptions('color') },
         ]
       : [
           { label: 'Taille', key: 'size', options: CLOTHING_SIZES },
@@ -77,11 +87,11 @@ export default function Catalog({ navigate, category }: CatalogProps) {
   return (
     <div className="container-ora">
       <PageHeader
-        eyebrow={isWigs ? 'Perruques' : 'Vêtements'}
-        title={isWigs ? 'Perruques pour toutes' : 'Mode femme, libre et fluide'}
+        eyebrow={isWigs ? settings.catalog.eyebrow : 'Vêtements'}
+        title={isWigs ? settings.catalog.title : 'Mode femme, libre et fluide'}
         subtitle={
           isWigs
-            ? "Lisse, afro, ondulé, tresses — chaque texture a sa place ici. Filtrez pour trouver celle qui vous ressemble."
+            ? settings.catalog.subtitle
             : "Lin, wax, bazin, maille douce — des pièces pensées pour vivre avec vous, au quotidien et en fête."
         }
       />

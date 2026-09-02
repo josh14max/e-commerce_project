@@ -5,8 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { formatPrice } from '@/lib/products';
 import { supabase } from '@/lib/supabase';
 import ProductImage from '@/components/ProductImage';
-
-const DEPOSIT_AMOUNT = 2000;
+import { useSiteSettings } from '@/lib/siteSettings';
 
 interface CheckoutProps {
   navigate: (to: string) => void;
@@ -21,8 +20,11 @@ interface CustomerForm {
 }
 
 export default function Checkout({ navigate }: CheckoutProps) {
-  const { items, subtotal, count, clear } = useCart();
+  const { items, subtotal, count } = useCart();
   const { user } = useAuth();
+  const { settings } = useSiteSettings();
+  const checkout = settings.checkout;
+  const depositAmount = Math.min(checkout.depositAmount, subtotal);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CustomerForm>({
@@ -73,6 +75,7 @@ export default function Checkout({ navigate }: CheckoutProps) {
         subtotal: subtotal,
         shipping: 0,
         total: subtotal,
+        deposit_amount: depositAmount,
         status: 'pending',
       };
 
@@ -89,7 +92,6 @@ export default function Checkout({ navigate }: CheckoutProps) {
       // 2. Initialize Moneroo payment via Edge Function
       const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: {
-          amount: DEPOSIT_AMOUNT,
           currency: 'XOF',
           customer: {
             email: form.email.trim() || user?.email || '',
@@ -136,8 +138,8 @@ export default function Checkout({ navigate }: CheckoutProps) {
       </button>
 
       <div className="mb-10 sm:mb-14">
-        <p className="eyebrow mb-3">Finalisation</p>
-        <h1 className="font-display text-3xl sm:text-4xl font-light text-ora-text tracking-tight">Finaliser ma commande</h1>
+        <p className="eyebrow mb-3">{checkout.eyebrow}</p>
+        <h1 className="font-display text-3xl sm:text-4xl font-light text-ora-text tracking-tight">{checkout.title}</h1>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-10 lg:gap-16">
@@ -146,7 +148,7 @@ export default function Checkout({ navigate }: CheckoutProps) {
           {/* Customer info form */}
           <section className="border-t border-ora-line/60 pt-8 mb-10">
             <h2 className="font-display text-2xl sm:text-3xl font-light text-ora-text mb-6 tracking-tight">
-              Vos coordonnées
+              {checkout.customerTitle}
             </h2>
             <div className="grid sm:grid-cols-2 gap-5">
               <div>
@@ -180,38 +182,43 @@ export default function Checkout({ navigate }: CheckoutProps) {
           {/* Deposit section */}
           <section className="border-t border-ora-line/60 pt-8">
             <div className="bg-nge-bg p-6 mb-8">
-              <p className="eyebrow mb-3">Dépôt de validation</p>
+              <p className="eyebrow mb-3">{checkout.depositLabel}</p>
               <div className="flex items-baseline justify-between">
                 <p className="font-num text-3xl font-bold text-ora-text tracking-tight">
-                  {formatPrice(DEPOSIT_AMOUNT)}
+                  {formatPrice(depositAmount)}
                 </p>
                 <p className="text-sm text-ora-text-muted">
-                  Solde à la livraison : <span className="font-num font-semibold text-ora-text">{formatPrice(subtotal - DEPOSIT_AMOUNT)}</span>
+                  Solde à la livraison : <span className="font-num font-semibold text-ora-text">{formatPrice(subtotal - depositAmount)}</span>
                 </p>
               </div>
               <p className="mt-3 text-sm text-ora-text-muted leading-relaxed">
-                Un dépôt de <span className="font-num font-semibold text-ora-text">{formatPrice(DEPOSIT_AMOUNT)}</span> confirme votre commande.
-                Le solde de <span className="font-num font-semibold text-ora-text">{formatPrice(subtotal - DEPOSIT_AMOUNT)}</span> est réglé à la livraison.
+                {checkout.depositDescription}{' '}
+                Le dépôt est de <span className="font-num font-semibold text-ora-text">{formatPrice(depositAmount)}</span> et le solde de{' '}
+                <span className="font-num font-semibold text-ora-text">{formatPrice(subtotal - depositAmount)}</span> est réglé à la livraison.
               </p>
             </div>
 
             {/* Payment methods info */}
             <h2 className="font-display text-xl font-light text-ora-text mb-4 tracking-tight">
-              Modes de paiement
+              {checkout.methodsTitle}
             </h2>
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className={`grid gap-4 mb-8 ${checkout.paymentMethods.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {checkout.paymentMethods.includes('wave_ci') && (
               <div className="flex flex-col items-center justify-center gap-3 p-5 border border-ora-line">
                 <div className="h-16 w-full flex items-center justify-center">
                   <img src="/WAVE.jpeg" alt="Wave" className="max-h-full max-w-full object-contain" />
                 </div>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-ora-text-muted">Wave</span>
               </div>
+              )}
+              {checkout.paymentMethods.includes('orange_ci') && (
               <div className="flex flex-col items-center justify-center gap-3 p-5 border border-ora-line">
                 <div className="h-16 w-full flex items-center justify-center">
                   <img src="/Orange-Money-logo.png" alt="Orange Money" className="max-h-full max-w-full object-contain" />
                 </div>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-ora-text-muted">Orange Money</span>
               </div>
+              )}
             </div>
 
             {error && (
@@ -234,12 +241,12 @@ export default function Checkout({ navigate }: CheckoutProps) {
               ) : (
                 <>
                   <Lock className="h-4 w-4" />
-                  Payer avec Wave ou Orange Money
+                  {checkout.paymentButton}
                 </>
               )}
             </button>
             <p className="mt-4 text-xs text-center text-ora-text-muted">
-              Paiement sécurisé. Vous serez redirigé pour régler le dépôt de {formatPrice(DEPOSIT_AMOUNT)}.
+              {checkout.securityText} Montant : {formatPrice(depositAmount)}.
             </p>
           </section>
         </div>
@@ -277,11 +284,11 @@ export default function Checkout({ navigate }: CheckoutProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-ora-text-muted">Dépôt de validation</span>
-                <span className="font-num font-semibold text-ora-text">{formatPrice(DEPOSIT_AMOUNT)}</span>
+                <span className="font-num font-semibold text-ora-text">{formatPrice(depositAmount)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ora-text-muted">Solde à la livraison</span>
-                <span className="font-num font-semibold text-ora-text">{formatPrice(subtotal - DEPOSIT_AMOUNT)}</span>
+                <span className="font-num font-semibold text-ora-text">{formatPrice(subtotal - depositAmount)}</span>
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-ora-line/60 flex justify-between items-baseline">

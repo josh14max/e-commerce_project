@@ -28,6 +28,7 @@ export interface Product {
   badge?: string;
   profiles: string[];
   featured?: boolean;
+  isActive?: boolean;
 }
 
 export interface CartItem {

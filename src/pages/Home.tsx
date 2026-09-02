@@ -4,13 +4,15 @@ import { getFeatured } from '@/lib/products';
 import ProductCard from '@/components/ProductCard';
 import ProductImage from '@/components/ProductImage';
 import type { Product } from '@/lib/types';
-import type { Route } from '@/lib/router';
+import { useSiteSettings } from '@/lib/siteSettings';
 
 interface HomeProps {
   navigate: (to: string) => void;
 }
 
 export default function Home({ navigate }: HomeProps) {
+  const { settings } = useSiteSettings();
+  const home = settings.home;
   const [featured, setFeatured] = useState<Product[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
 
@@ -32,9 +34,9 @@ export default function Home({ navigate }: HomeProps) {
       {/* ────────── Hero full-screen ────────── */}
       <section className="relative h-[88vh] min-h-[600px] w-full overflow-hidden">
         <picture>
-          <source media="(min-width: 768px)" srcSet="/image-pres.webp" />
+          <source media="(min-width: 768px)" srcSet={home.heroDesktopImage} />
           <img
-            src="/image-pres1.webp"
+            src={home.heroMobileImage}
             alt="NG Hair — Perruques & mode femme"
             loading="eager"
             fetchPriority="high"
@@ -47,8 +49,8 @@ export default function Home({ navigate }: HomeProps) {
           <p className="eyebrow text-white/80 mb-5">Perruques & mode femme</p>
           */}
           <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-light leading-[1.05] tracking-tight max-w-3xl">
-            <span className="block text-white">La beauté qui</span>
-            <span className="block text-nge-gold">vous ressemble.</span>
+            <span className="block text-white">{home.heroTitle}</span>
+            <span className="block text-nge-gold">{home.heroAccent}</span>
           </h1>
           <div className="mt-6 flex items-center gap-3 w-full max-w-xs">
             <span className="h-px flex-1 bg-white/40" />
@@ -56,7 +58,7 @@ export default function Home({ navigate }: HomeProps) {
             <span className="h-px flex-1 bg-white/40" />
           </div>
           <p className="mt-6 max-w-xl text-base sm:text-lg text-white/85 font-light leading-relaxed">
-            Des perruques pensées pour toutes les femmes.
+            {home.heroSubtitle}
           </p>
           <div className="mt-10 flex flex-wrap justify-start gap-3">
           </div>
@@ -90,8 +92,8 @@ export default function Home({ navigate }: HomeProps) {
       <section className="container-ora pb-16 sm:pb-24">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <p className="eyebrow mb-5">Sélection NG Hair</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-light tracking-tight">Nos pièces phares</h2>
+            <p className="eyebrow mb-5">{home.featuredEyebrow}</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-light tracking-tight">{home.featuredTitle}</h2>
           </div>
           <button
             onClick={() => navigate('/perruques')}
@@ -115,22 +117,20 @@ export default function Home({ navigate }: HomeProps) {
       <section className="bg-nge-bg py-16 sm:py-24">
         <div className="container-ora grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <ProductImage
-            src="https://images.pexels.com/photos/3992652/pexels-photo-3992652.jpeg?auto=compress&cs=tinysrgb&w=900&h=700&fit=crop"
+            src={home.storyImage}
             alt="L'atelier NG Hair"
             className="aspect-[4/3]"
           />
           <div>
-            <p className="eyebrow mb-3">NG Hair</p>
+            <p className="eyebrow mb-3">{home.storyEyebrow}</p>
             <h2 className="font-display text-3xl sm:text-4xl font-light leading-tight tracking-tight">
-              Une histoire de femmes, écrite pour toutes.
+              {home.storyTitle}
             </h2>
             <p className="mt-5 text-base text-nge-muted leading-relaxed font-light">
-              NG Hair est né d'une conviction simple : aucune femme ne devrait choisir entre esthétique, héritage et
-              confort. Nous réunissons tout type de perruques dans une même maison, pensés pour vous offrir une
-              lumière qui vous appartient, quelle que soit votre histoire.
+              {home.storyBody}
             </p>
             <button onClick={() => navigate('/a-propos')} className="btn-outline mt-8">
-              Notre histoire <ArrowRight className="h-4 w-4" />
+              {home.storyButton} <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>

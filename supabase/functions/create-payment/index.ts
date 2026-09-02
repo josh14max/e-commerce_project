@@ -1,4 +1,5 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +15,6 @@ interface CustomerPayload {
 }
 
 interface CreatePaymentPayload {
-  amount: number;
   currency: string;
   customer: CustomerPayload;
   orderId: string;
@@ -29,6 +29,11 @@ interface MonerooResponse {
   errors?: unknown;
 }
 
+interface CheckoutConfig {
+  depositAmount?: number;
+  paymentMethods?: string[];
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -39,10 +44,9 @@ function jsonResponse(body: unknown, status = 200): Response {
 function isValidPayload(payload: unknown): payload is CreatePaymentPayload {
   if (!payload || typeof payload !== "object") return false;
 
-  const { amount, currency, customer, orderId, returnUrl } =
+  const { currency, customer, orderId, returnUrl } =
     payload as Record<string, unknown>;
 
-  if (typeof amount !== "number" || amount <= 0) return false;
   if (typeof currency !== "string" || currency.trim() === "") return false;
   if (typeof orderId !== "string" || orderId.trim() === "") return false;
   if (typeof returnUrl !== "string" || returnUrl.trim() === "") return false;
@@ -69,8 +73,10 @@ Deno.serve(async (req) => {
   }
 
   const secretKey = Deno.env.get("MONEROO_SECRET_KEY");
-  if (!secretKey) {
-    console.error("MONEROO_SECRET_KEY is not configured");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!secretKey || !supabaseUrl || !serviceRoleKey) {
+    console.error("Payment service environment is not configured");
     return jsonResponse({ error: "Payment service unavailable" }, 500);
   }
 
@@ -85,13 +91,59 @@ Deno.serve(async (req) => {
     return jsonResponse(
       {
         error:
-          "Missing or invalid fields: amount, currency, customer (email, first_name, last_name), orderId, returnUrl",
+          "Missing or invalid fields: currency, customer (email, first_name, last_name), orderId, returnUrl",
       },
       400,
     );
   }
 
-  const { amount, currency, customer, orderId, returnUrl } = payload;
+  const { currency, customer, orderId, returnUrl } = payload;
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+  const [{ data: order, error: orderError }, { data: settingsRow, error: settingsError }] = await Promise.all([
+    adminClient
+      .from("orders")
+      .select("id, email, subtotal, status")
+      .eq("id", orderId)
+      .maybeSingle(),
+    adminClient
+      .from("site_settings")
+      .select("value")
+      .eq("key", "checkout")
+      .maybeSingle(),
+  ]);
+
+  if (orderError || !order || order.email.toLowerCase() !== customer.email.toLowerCase()) {
+    return jsonResponse({ error: "Order not found" }, 404);
+  }
+  if (order.status !== "pending") {
+    return jsonResponse({ error: "Order is not pending" }, 409);
+  }
+
+  const checkoutConfig = (settingsError ? null : settingsRow?.value) as CheckoutConfig | null;
+  const configuredDeposit = Number(checkoutConfig?.depositAmount ?? 2000);
+  const orderSubtotal = Number(order.subtotal);
+  if (!Number.isFinite(configuredDeposit) || configuredDeposit <= 0 || !Number.isFinite(orderSubtotal) || orderSubtotal <= 0) {
+    return jsonResponse({ error: "Invalid payment configuration" }, 500);
+  }
+
+  const amount = Math.min(configuredDeposit, orderSubtotal);
+  const allowedMethods = ["wave_ci", "orange_ci"];
+  const methods = (checkoutConfig?.paymentMethods ?? allowedMethods)
+    .filter((method) => allowedMethods.includes(method));
+  if (methods.length === 0) {
+    return jsonResponse({ error: "No payment method is enabled" }, 503);
+  }
+
+  const { error: updateOrderError } = await adminClient
+    .from("orders")
+    .update({ deposit_amount: amount })
+    .eq("id", orderId)
+    .eq("status", "pending");
+  if (updateOrderError) {
+    console.error("Failed to store authoritative deposit amount", updateOrderError.message);
+    return jsonResponse({ error: "Unable to prepare order payment" }, 500);
+  }
 
   let monerooResponse: Response;
   try {
@@ -115,7 +167,7 @@ Deno.serve(async (req) => {
             last_name: customer.last_name,
           },
           metadata: { order_id: orderId },
-          methods: ["wave_ci", "orange_ci"],
+          methods,
         }),
       },
     );
@@ -154,5 +206,5 @@ Deno.serve(async (req) => {
     );
   }
 
-  return jsonResponse({ checkout_url: checkoutUrl });
+  return jsonResponse({ checkout_url: checkoutUrl, amount });
 });

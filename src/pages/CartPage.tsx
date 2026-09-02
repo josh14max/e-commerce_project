@@ -2,6 +2,7 @@ import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { formatPrice } from '@/lib/products';
 import ProductImage from '@/components/ProductImage';
+import { useSiteSettings } from '@/lib/siteSettings';
 
 interface CartPageProps {
   navigate: (to: string) => void;
@@ -9,6 +10,8 @@ interface CartPageProps {
 
 export default function CartPage({ navigate }: CartPageProps) {
   const { items, setQuantity, remove, subtotal, count } = useCart();
+  const { settings } = useSiteSettings();
+  const paymentNames = settings.checkout.paymentMethods.map((method) => method === 'wave_ci' ? 'Wave' : 'Orange Money');
 
   if (items.length === 0) {
     return (
@@ -131,7 +134,7 @@ export default function CartPage({ navigate }: CartPageProps) {
               <ArrowRight className="h-4 w-4" />
             </button>
             <p className="mt-4 text-xs text-center text-ora-text-muted leading-relaxed">
-              Paiement sécurisé par Wave ou Orange Money
+              Paiement sécurisé par {paymentNames.join(' ou ')}
             </p>
           </div>
         </div>
