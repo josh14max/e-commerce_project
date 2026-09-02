@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Menu, X, ShoppingBag, User } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { link } from '@/lib/router';
+import { useSiteSettings } from '@/lib/siteSettings';
 
 interface NavbarProps {
   navigate: (to: string) => void;
@@ -16,6 +17,7 @@ const NAV_LINKS = [
 
 export default function Navbar({ navigate, currentRoute, onOpenCart }: NavbarProps) {
   const { count } = useCart();
+  const { settings } = useSiteSettings();
   const [open, setOpen] = useState(false);
 
   const go = (path: string) => { navigate(path); setOpen(false); };
@@ -28,7 +30,7 @@ export default function Navbar({ navigate, currentRoute, onOpenCart }: NavbarPro
         <div className="flex whitespace-nowrap ticker-track">
           {[0, 1].map((dup) => (
             <div key={dup} className="flex shrink-0">
-              {['Livraison soignée', 'Perruques', 'Beauté qui vous ressemble'].map((t, i) => (
+              {settings.header.tickerItems.map((t, i) => (
                 <span key={i} className="flex items-center text-[10px] font-medium uppercase tracking-[0.25em] px-8">
                   <span className="mr-3 text-nge-warm">✦</span>{t}
                 </span>

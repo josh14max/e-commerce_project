@@ -1,5 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
+interface VercelRequest {
+  query?: { slug?: string | string[] };
+  headers: Record<string, string | string[] | undefined>;
+}
+
+interface VercelResponse {
+  setHeader: (name: string, value: string) => void;
+  status: (statusCode: number) => VercelResponse;
+  send: (body: string) => void;
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -16,12 +27,14 @@ function escapeHtml(str: string): string {
 // client navigateur) car elle tourne côté serveur. Si la requête échoue pour une raison
 // quelconque (réseau, config), elle ne plante jamais : elle retombe sur les balises génériques
 // du site, jamais sur une erreur brute.
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slugParam = req.query?.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam ?? '';
 
-  const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
-  const host = req.headers.host;
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  const proto = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || 'https';
+  const forwardedHost = req.headers.host;
+  const host = Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost;
   const baseUrl = `${proto}://${host}`;
 
   let product: {

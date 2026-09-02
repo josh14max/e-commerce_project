@@ -9,12 +9,35 @@ export interface ProductFormValues {
   shortDescription: string;
   description: string;
   images: string[];
-  texture: string;
+  textures: string[];
   colors: string[];
   lengths: string[];
   badge: string;
   featured: boolean;
   isActive: boolean;
+}
+
+interface AdminProductRow {
+  id: string;
+  slug: string;
+  name: string;
+  category: Product['category'];
+  universe: Product['universe'];
+  price: number | string;
+  compare_at_price: number | string | null;
+  short_description: string | null;
+  description: string | null;
+  images: string[] | null;
+  texture: string | null;
+  length: string | null;
+  color: string | null;
+  colors: string[] | null;
+  lengths: string[] | null;
+  textures: string[] | null;
+  badge: string | null;
+  profiles: string[] | null;
+  featured: boolean | null;
+  is_active: boolean | null;
 }
 
 export function makeSlug(name: string): string {
@@ -38,12 +61,12 @@ function toDbRow(values: ProductFormValues) {
     short_description: values.shortDescription,
     description: values.description,
     images: values.images,
-    texture: values.texture || null,
+    texture: values.textures[0] ?? null,
     length: values.lengths[0] ?? null,
     color: values.colors[0] ?? null,
     colors: values.colors,
     lengths: values.lengths,
-    textures: values.texture ? [values.texture] : [],
+    textures: values.textures,
     badge: values.badge || null,
     profiles: [],
     featured: values.featured,
@@ -79,7 +102,7 @@ export async function getAllProductsForAdmin(): Promise<Product[]> {
     return [];
   }
 
-  return (data ?? []).map((row: any) => ({
+  return ((data ?? []) as AdminProductRow[]).map((row) => ({
     id: row.id,
     slug: row.slug,
     name: row.name,

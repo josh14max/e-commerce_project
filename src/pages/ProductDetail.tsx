@@ -20,6 +20,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
   const [related, setRelated] = useState<Product[]>([]);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
+  const [selectedTexture, setSelectedTexture] = useState('');
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -37,6 +38,7 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
       setActiveImage(0);
       setSelectedVariant('');
       setSelectedColor(data?.colors[0] ?? '');
+      setSelectedTexture(data?.textures?.[0] ?? data?.texture ?? '');
 
       if (data) {
         getByCategory(data.category).then((all) => {
@@ -71,9 +73,10 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
   const variantOptions = isWig
     ? product.lengths ?? []
     : product.sizes ?? [];
-  const variantKey = isWig ? 'longueur' : 'taille';
   const defaultVariant = variantOptions[0] ?? '';
   const currentVariant = selectedVariant || defaultVariant;
+  const textureOptions = product.textures?.length ? product.textures : product.texture ? [product.texture] : [];
+  const currentTexture = selectedTexture || textureOptions[0] || '';
   const currentPrice = isWig ? getPriceForSize(product.price, currentVariant) : product.price;
 
   const handleAdd = () => {
@@ -85,8 +88,8 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
         price: currentPrice,
         image: product.images[0],
         category: product.category,
-        variantLabel: `${selectedColor} · ${currentVariant}`,
-        variantValue: `${selectedColor}__${currentVariant}`,
+        variantLabel: [selectedColor, currentTexture, currentVariant].filter(Boolean).join(' · '),
+        variantValue: [selectedColor, currentTexture, currentVariant].filter(Boolean).join('__'),
       },
       quantity
     );
@@ -173,6 +176,27 @@ export default function ProductDetail({ slug, navigate }: ProductDetailProps) {
               ))}
             </div>
           </div>
+
+          {textureOptions.length > 0 && (
+            <div className="mt-5">
+              <p className="label">Texture : <span className="font-normal text-ora-text-muted">{currentTexture}</span></p>
+              <div className="flex flex-wrap gap-2">
+                {textureOptions.map((texture) => (
+                  <button
+                    key={texture}
+                    onClick={() => setSelectedTexture(texture)}
+                    className={`min-w-12 rounded-full border px-4 py-2.5 text-xs font-medium uppercase tracking-[0.15em] transition-colors ${
+                      currentTexture === texture
+                        ? 'border-ora-text bg-ora-text text-white'
+                        : 'border-ora-line bg-transparent text-ora-text hover:border-ora-text'
+                    }`}
+                  >
+                    {texture}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Variant selector (length for wigs, size for clothing) */}
           {variantOptions.length > 0 && (

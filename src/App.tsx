@@ -15,12 +15,13 @@ import Account from '@/pages/Account';
 import About from '@/pages/About';
 import Admin from '@/pages/Admin';
 import AdminResetPassword from '@/pages/AdminResetPassword';
+import { SiteSettingsProvider } from '@/lib/siteSettings';
 
 function currentRouteName(route: ReturnType<typeof useRoute>[0]): string {
   return route.name;
 }
 
-function App() {
+function AppContent() {
   const [route, navigate] = useRoute();
   const [cartOpen, setCartOpen] = useState(false);
   const current = currentRouteName(route);
@@ -30,7 +31,7 @@ function App() {
   if (route.name === 'admin') {
     return (
       <AuthProvider>
-        <Admin navigate={navigate} />
+        <Admin />
       </AuthProvider>
     );
   }
@@ -87,6 +88,14 @@ function App() {
         </div>
       </CartProvider>
     </AuthProvider>
+  );
+}
+
+function App() {
+  return (
+    <SiteSettingsProvider>
+      <AppContent />
+    </SiteSettingsProvider>
   );
 }
 

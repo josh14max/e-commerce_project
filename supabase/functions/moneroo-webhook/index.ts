@@ -5,6 +5,16 @@ const MONEROO_SECRET_KEY = Deno.env.get('MONEROO_SECRET_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
+interface MonerooWebhookData {
+  id?: string
+  metadata?: { order_id?: string }
+}
+
+interface MonerooWebhookPayload {
+  event?: string
+  data?: MonerooWebhookData
+}
+
 async function verifySignature(rawBody: string, signature: string | null): Promise<boolean> {
   if (!signature) return false
   const encoder = new TextEncoder()
@@ -40,9 +50,13 @@ Deno.serve(async (req) => {
     return new Response('Invalid signature', { status: 403 })
   }
 
-  let payload: any
+  let payload: MonerooWebhookPayload
   try {
-    payload = JSON.parse(rawBody)
+    const parsed: unknown = JSON.parse(rawBody)
+    if (!parsed || typeof parsed !== 'object') {
+      return new Response('Invalid JSON payload', { status: 400 })
+    }
+    payload = parsed as MonerooWebhookPayload
   } catch {
     return new Response('Invalid JSON', { status: 400 })
   }
