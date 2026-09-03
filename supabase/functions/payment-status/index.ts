@@ -92,7 +92,9 @@ async function reconcileWithMoneroo(
 
     if (providerStatus === "paid") {
       const amount = Number(payment?.amount);
-      const currency = String(payment?.currency ?? "").toUpperCase();
+      const currency = String(
+        payment?.currency?.code ?? payment?.currency ?? "",
+      ).toUpperCase();
       if (amount !== Number(order.deposit_amount) || currency !== "XOF") {
         console.error("Moneroo amount or currency does not match the order");
         return order;

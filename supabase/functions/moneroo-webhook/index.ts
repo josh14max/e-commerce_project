@@ -121,7 +121,9 @@ Deno.serve(async (req) => {
     const verifiedStatus = String(verifiedPayment?.status ?? "").toLowerCase();
     const verifiedOrderId = verifiedPayment?.metadata?.order_id;
     const verifiedAmount = Number(verifiedPayment?.amount);
-    const verifiedCurrency = String(verifiedPayment?.currency ?? "").toUpperCase();
+    const verifiedCurrency = String(
+      verifiedPayment?.currency?.code ?? verifiedPayment?.currency ?? "",
+    ).toUpperCase();
     if (
       verifiedStatus !== "success" ||
       verifiedOrderId !== order.id ||
