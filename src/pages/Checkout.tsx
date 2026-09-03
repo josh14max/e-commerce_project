@@ -63,8 +63,9 @@ export default function Checkout({ navigate }: CheckoutProps) {
 
     setLoading(true);
     try {
-      // La fonction serveur crée la commande et recalcule tous les prix depuis
-      // le catalogue avant d'initialiser le paiement Moneroo.
+      // The Edge Function creates the order and recalculates prices from the
+      // catalog before initializing the Moneroo payment. This avoids exposing
+      // a guest INSERT/SELECT flow on the orders table.
       const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: {
           customer: {
@@ -79,7 +80,7 @@ export default function Checkout({ navigate }: CheckoutProps) {
             variantValue: item.variantValue,
             quantity: item.quantity,
           })),
-          returnUrl: `${window.location.origin}/paiement/confirmation`,
+          returnUrl: `${window.location.origin}/commande/confirmation`,
         },
       });
 
@@ -97,8 +98,8 @@ export default function Checkout({ navigate }: CheckoutProps) {
         throw new Error('URL de paiement manquante dans la réponse.');
       }
 
-      // Moneroo redirigera ensuite vers /paiement/confirmation. Seul le
-      // webhook ou la vérification serveur pourra confirmer le paiement.
+      // Moneroo redirects to the confirmation page. Only the webhook or a
+      // server-side verification can mark the order as paid.
       window.location.href = data.checkout_url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du paiement.');
