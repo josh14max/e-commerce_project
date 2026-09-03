@@ -80,7 +80,7 @@ export default function Checkout({ navigate }: CheckoutProps) {
             variantValue: item.variantValue,
             quantity: item.quantity,
           })),
-          returnUrl: `${window.location.origin}/commande/confirmation`,
+          returnUrl: `${window.location.origin}/paiement/confirmation`,
         },
       });
 
